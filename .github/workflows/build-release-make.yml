@@ -46,7 +46,6 @@ jobs:
 
       - name: Apply custom patches
         run: |
-          ls -la ./minio-patches/minio-patches/${{ inputs.minio-tag }}/
           ls -la
           ls -la ./minio-patches/
           cd ${GITHUB_WORKSPACE}
