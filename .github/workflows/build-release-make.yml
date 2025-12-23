@@ -19,18 +19,18 @@ jobs:
       packages: write
 
     steps:
-      - name: Checkout this repo
-        uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-          path: minio-patches
-
       - name: Checkout upstream MinIO
         uses: actions/checkout@v6
         with:
           repository: ${{ env.MINIO_UPSTREAM_REPO }}
           ref: ${{ inputs.minio-tag }}
-          fetch-depth: 0
+
+      - name: Checkout this repo
+        uses: actions/checkout@v6
+        with:
+          path: minio-patches
+
+
 
       - name: Apply custom patches
         run: |
