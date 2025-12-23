@@ -30,14 +30,8 @@ jobs:
         with:
           path: minio-patches
 
-
-
       - name: Apply custom patches
         run: |
-          ls -la
-          ls -la ./minio-patches/
-          ls -la ./minio-patches/minio-patches/
-          ls -la ./minio-patches/minio-patches/${{ inputs.minio-tag }}/
           cd ${GITHUB_WORKSPACE}
           for p in ./minio-patches/minio-patches/${{ inputs.minio-tag }}/*.patch; do
             echo "Applying $p…"
@@ -86,35 +80,30 @@ jobs:
           chmod +x "mc"
           sha256sum "mc" | awk '{print $1"  mc"}' > "mc.sha256sum"
 
-      # - name: Run integration tests
-      #   working-directory: minio-src
-      #   run: |
-      #     set -euo pipefail
-      #     bash buildscripts/verify-build.sh
+      - name: Run integration tests
+        run: |
+          set -euo pipefail
+          bash buildscripts/verify-build.sh
 
-      # - name: Run healing tests
-      #   working-directory: minio-src
-      #   run: |
-      #     set -euo pipefail
-      #     bash buildscripts/verify-healing.sh
+      - name: Run healing tests
+        run: |
+          set -euo pipefail
+          bash buildscripts/verify-healing.sh
 
-      # - name: Run empty erasure set healing tests
-      #   working-directory: minio-src
-      #   run: |
-      #     set -euo pipefail
-      #     bash buildscripts/verify-healing-empty-erasure-set.sh
+      - name: Run empty erasure set healing tests
+        run: |
+          set -euo pipefail
+          bash buildscripts/verify-healing-empty-erasure-set.sh
 
-      # - name: Run healing with root disks tests
-      #   working-directory: minio-src
-      #   run: |
-      #     set -euo pipefail
-      #     bash buildscripts/verify-healing-with-root-disks.sh
+      - name: Run healing with root disks tests
+        run: |
+          set -euo pipefail
+          bash buildscripts/verify-healing-with-root-disks.sh
 
-      # - name: Run multipart quorum tests
-      #   working-directory: minio-src
-      #   run: |
-      #     set -euo pipefail
-      #     bash buildscripts/multipart-quorum-test.sh
+      - name: Run multipart quorum tests
+        run: |
+          set -euo pipefail
+          bash buildscripts/multipart-quorum-test.sh
 
       # - name: Run timeout tests
       #   working-directory: minio-src
@@ -122,59 +111,59 @@ jobs:
       #     set -euo pipefail
       #     bash buildscripts/test-timeout.sh
 
-      # - name: Log in to GitHub Container Registry
-      #   uses: docker/login-action@v3
-      #   with:
-      #     registry: ghcr.io
-      #     username: ${{ github.actor }}
-      #     password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      # - name: Build and push multi-arch Docker image
-      #   uses: docker/build-push-action@v6.18.0
-      #   with:
-      #     context: ./minio-src
-      #     file: ./Dockerfile.release.local
-      #     platforms: linux/amd64,linux/arm64
-      #     push: true
-      #     tags: |
-      #       ghcr.io/${{ github.repository_owner }}/qubersip-minio:${{ env.RELEASE_TAG }}
-      #       ghcr.io/${{ github.repository_owner }}/qubersip-minio:latest
-      #     build-args: |
-      #       RELEASE=${{ env.RELEASE_TAG }}
-      #     cache-from: type=gha
-      #     cache-to: type=gha,mode=max
+      - name: Build and push multi-arch Docker image
+        uses: docker/build-push-action@v6.18.0
+        with:
+          context: .
+          file: ./Dockerfile.release.local
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/qubersip-minio:${{ env.RELEASE_TAG }}
+            ghcr.io/${{ github.repository_owner }}/qubersip-minio:latest
+          build-args: |
+            RELEASE=${{ env.RELEASE_TAG }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
-      # - name: Pull multi-arch image for testing
-      #   run: |
-      #     docker pull ghcr.io/${{ github.repository_owner }}/qubersip-minio:${{ env.RELEASE_TAG }}
-      #     docker tag ghcr.io/${{ github.repository_owner }}/qubersip-minio:${{ env.RELEASE_TAG }} qubersip-minio:${{ env.RELEASE_TAG }}
-      #     docker tag ghcr.io/${{ github.repository_owner }}/qubersip-minio:${{ env.RELEASE_TAG }} qubersip-minio:latest
+      - name: Pull multi-arch image for testing
+        run: |
+          docker pull ghcr.io/${{ github.repository_owner }}/qubersip-minio:${{ env.RELEASE_TAG }}
+          docker tag ghcr.io/${{ github.repository_owner }}/qubersip-minio:${{ env.RELEASE_TAG }} qubersip-minio:${{ env.RELEASE_TAG }}
+          docker tag ghcr.io/${{ github.repository_owner }}/qubersip-minio:${{ env.RELEASE_TAG }} qubersip-minio:latest
 
-      # - name: Test Docker image - smoke test
-      #   run: |
-      #     set -euo pipefail
-      #     cid=$(docker run -d --rm \
-      #       -p 9000:9000 -p 9001:9001 \
-      #       -e MINIO_ROOT_USER=minioadmin \
-      #       -e MINIO_ROOT_PASSWORD=minioadmin \
-      #       "qubersip-minio:${RELEASE_TAG}" server /data --console-address ":9001")
+      - name: Test Docker image - smoke test
+        run: |
+          set -euo pipefail
+          cid=$(docker run -d --rm \
+            -p 9000:9000 -p 9001:9001 \
+            -e MINIO_ROOT_USER=minioadmin \
+            -e MINIO_ROOT_PASSWORD=minioadmin \
+            "qubersip-minio:${RELEASE_TAG}" server /data --console-address ":9001")
 
-      #     for i in $(seq 1 60); do
-      #       code=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:9000/minio/health/ready || true)
-      #       [ "$code" = "200" ] && break
-      #       [ "$i" = "60" ] && { docker logs "$cid"; exit 1; }
-      #       sleep 1
-      #     done
+          for i in $(seq 1 60); do
+            code=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:9000/minio/health/ready || true)
+            [ "$code" = "200" ] && break
+            [ "$i" = "60" ] && { docker logs "$cid"; exit 1; }
+            sleep 1
+          done
 
-      #     curl -fsSL "https://dl.min.io/client/mc/release/linux-amd64/mc" -o /tmp/mc
-      #     chmod +x /tmp/mc
-      #     /tmp/mc alias set local http://127.0.0.1:9000 minioadmin minioadmin
-      #     /tmp/mc mb local/testbucket
-      #     echo "test" | /tmp/mc pipe local/testbucket/test.txt
-      #     /tmp/mc cat local/testbucket/test.txt | grep -q test
+          curl -fsSL "https://dl.min.io/client/mc/release/linux-amd64/mc" -o /tmp/mc
+          chmod +x /tmp/mc
+          /tmp/mc alias set local http://127.0.0.1:9000 minioadmin minioadmin
+          /tmp/mc mb local/testbucket
+          echo "test" | /tmp/mc pipe local/testbucket/test.txt
+          /tmp/mc cat local/testbucket/test.txt | grep -q test
 
-      #     docker stop "$cid" >/dev/null
-      #     echo "✓ Smoke tests passed"
+          docker stop "$cid" >/dev/null
+          echo "✓ Smoke tests passed"
 
       # - name: Test Docker image - erasure mode (Docker Compose)
       #   run: |
@@ -258,4 +247,3 @@ jobs:
 
       #     docker compose -f /tmp/docker-compose.yml down
       #     echo "✓ Erasure mode tests passed"
-
