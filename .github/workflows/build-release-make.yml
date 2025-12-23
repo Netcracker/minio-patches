@@ -23,13 +23,13 @@ jobs:
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
+          path: minio-patches
 
       - name: Checkout upstream MinIO
         uses: actions/checkout@v6
         with:
           repository: ${{ env.MINIO_UPSTREAM_REPO }}
           ref: ${{ inputs.minio-tag }}
-          path: minio-src
           fetch-depth: 0
 
       - name: Setup Go
@@ -46,15 +46,15 @@ jobs:
 
       - name: Apply custom patches
         run: |
-          ls -la ./minio-patches/${{ inputs.minio-tag }}/
+          ls -la ./minio-patches/minio-patches/${{ inputs.minio-tag }}/
           ls -la
           ls -la ./minio-patches/
           cd ${GITHUB_WORKSPACE}
-          for p in ./minio-patches/${{ inputs.minio-tag }}/*.patch; do
+          for p in ./minio-patches/minio-patches/${{ inputs.minio-tag }}/*.patch; do
             echo "Applying $p…"
             git apply -p1 --ignore-space-change --ignore-whitespace "$p"
           done
-          rm -rf ./minio-patches
+          rm -rf ./minio-patches/minio-patches
 
       # - name: Build binaries for multiple architectures
       #   working-directory: minio-src
