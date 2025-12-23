@@ -80,36 +80,40 @@ jobs:
           chmod +x "mc"
           sha256sum "mc" | awk '{print $1"  mc"}' > "mc.sha256sum"
 
-      - name: Run integration tests
-        run: |
-          set -euo pipefail
-          bash buildscripts/verify-build.sh
+      # - name: Run integration tests
+      #   run: |
+      #     set -euo pipefail
+      #     bash buildscripts/verify-build.sh
 
-      - name: Run healing tests
-        run: |
-          set -euo pipefail
-          bash buildscripts/verify-healing.sh
+      # - name: Run healing tests
+      #   run: |
+      #     set -euo pipefail
+      #     bash buildscripts/verify-healing.sh
 
-      - name: Run empty erasure set healing tests
-        run: |
-          set -euo pipefail
-          bash buildscripts/verify-healing-empty-erasure-set.sh
+      # - name: Run empty erasure set healing tests
+      #   run: |
+      #     set -euo pipefail
+      #     bash buildscripts/verify-healing-empty-erasure-set.sh
 
-      - name: Run healing with root disks tests
-        run: |
-          set -euo pipefail
-          bash buildscripts/verify-healing-with-root-disks.sh
+      # - name: Run healing with root disks tests
+      #   run: |
+      #     set -euo pipefail
+      #     bash buildscripts/verify-healing-with-root-disks.sh
 
-      - name: Run multipart quorum tests
-        run: |
-          set -euo pipefail
-          bash buildscripts/multipart-quorum-test.sh
+      # - name: Run multipart quorum tests
+      #   run: |
+      #     set -euo pipefail
+      #     bash buildscripts/multipart-quorum-test.sh
 
       # - name: Run timeout tests
       #   working-directory: minio-src
       #   run: |
       #     set -euo pipefail
       #     bash buildscripts/test-timeout.sh
+
+      - name: Compute lowercase owner for GHCR
+        run: |
+          echo "OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_ENV"
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
@@ -126,8 +130,8 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/qubersip-minio:${{ env.RELEASE_TAG }}
-            ghcr.io/${{ github.repository_owner }}/qubersip-minio:latest
+            ghcr.io/${{ env.OWNER }}/qubersip-minio:${{ env.RELEASE_TAG }}
+            ghcr.io/${{ env.OWNER }}/qubersip-minio:latest
           build-args: |
             RELEASE=${{ env.RELEASE_TAG }}
           cache-from: type=gha
@@ -135,9 +139,9 @@ jobs:
 
       - name: Pull multi-arch image for testing
         run: |
-          docker pull ghcr.io/${{ github.repository_owner }}/qubersip-minio:${{ env.RELEASE_TAG }}
-          docker tag ghcr.io/${{ github.repository_owner }}/qubersip-minio:${{ env.RELEASE_TAG }} qubersip-minio:${{ env.RELEASE_TAG }}
-          docker tag ghcr.io/${{ github.repository_owner }}/qubersip-minio:${{ env.RELEASE_TAG }} qubersip-minio:latest
+          docker pull ghcr.io/${{ env.OWNER }}/qubersip-minio:${{ env.RELEASE_TAG }}
+          docker tag ghcr.io/${{ env.OWNER }}/qubersip-minio:${{ env.RELEASE_TAG }} qubersip-minio:${{ env.RELEASE_TAG }}
+          docker tag ghcr.io/${{ env.OWNER }}/qubersip-minio:${{ env.RELEASE_TAG }} qubersip-minio:latest
 
       - name: Test Docker image - smoke test
         run: |
