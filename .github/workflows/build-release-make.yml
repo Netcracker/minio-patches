@@ -37,6 +37,7 @@ jobs:
           ls -la
           ls -la ./minio-patches/
           ls -la ./minio-patches/minio-patches/
+          ls -la ./minio-patches/minio-patches/${{ inputs.minio-tag }}/
           cd ${GITHUB_WORKSPACE}
           for p in ./minio-patches/minio-patches/${{ inputs.minio-tag }}/*.patch; do
             echo "Applying $p…"
