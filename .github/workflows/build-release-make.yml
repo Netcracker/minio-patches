@@ -32,18 +32,6 @@ jobs:
           ref: ${{ inputs.minio-tag }}
           fetch-depth: 0
 
-      - name: Setup Go
-        uses: actions/setup-go@v6
-        with:
-          go-version: "1.24.x"
-          cache: true
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
       - name: Apply custom patches
         run: |
           ls -la
@@ -54,6 +42,18 @@ jobs:
             git apply -p1 --ignore-space-change --ignore-whitespace "$p"
           done
           rm -rf ./minio-patches/minio-patches
+
+      # - name: Setup Go
+      #   uses: actions/setup-go@v6
+      #   with:
+      #     go-version: "1.24.x"
+      #     cache: true
+
+      # - name: Set up QEMU
+      #   uses: docker/setup-qemu-action@v3
+
+      # - name: Set up Docker Buildx
+      #   uses: docker/setup-buildx-action@v3
 
       # - name: Build binaries for multiple architectures
       #   working-directory: minio-src
