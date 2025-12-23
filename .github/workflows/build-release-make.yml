@@ -46,12 +46,11 @@ jobs:
 
       - name: Apply custom patches
         run: |
-          ls -la ./minio-patches/minio-patches/${{ inputs.minio-tag }}/
+          ls -la ./minio-patches/${{ inputs.minio-tag }}/
           ls -la
           ls -la ./minio-patches/
-          ls -la ./minio-patches/minio-patches/
           cd ${GITHUB_WORKSPACE}
-          for p in ./minio-patches/minio-patches/${{ inputs.minio-tag }}/*.patch; do
+          for p in ./minio-patches/${{ inputs.minio-tag }}/*.patch; do
             echo "Applying $p…"
             git apply -p1 --ignore-space-change --ignore-whitespace "$p"
           done
