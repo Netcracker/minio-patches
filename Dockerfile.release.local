@@ -1,0 +1,71 @@
+FROM golang:1.24-alpine AS build
+
+ARG TARGETARCH
+ARG RELEASE
+
+ENV GOPATH=/go
+ENV CGO_ENABLED=0
+
+WORKDIR /build
+
+# Install tools and create static curl for final image (optional, mirrors release)
+RUN apk add -U --no-cache ca-certificates curl bash && \
+    apk add -U --no-cache --virtual .build-deps curl-dev && \
+    # copy helper to fetch a static curl if present in repo
+    true
+
+# Expected artifacts (prepared by CI/workflow):
+#   minio-<arch>.<RELEASE>
+#   minio-<arch>.<RELEASE>.sha256sum
+#   mc
+#   mc.sha256sum
+
+# copy locally-built binaries into build stage (use TARGETARCH for multi-platform)
+COPY minio-${TARGETARCH}.${RELEASE} /go/bin/minio
+COPY minio-${TARGETARCH}.${RELEASE}.sha256sum /go/bin/minio.sha256sum
+
+COPY mc /go/bin/mc
+COPY mc.sha256sum /go/bin/mc.sha256sum
+
+# verify checksums (integrity check only)
+# sha256sum files contain full filenames (minio-${TARGETARCH}.${RELEASE}), need to rename for verification
+RUN cd /go/bin && \
+    mv minio minio-${TARGETARCH}.${RELEASE} && \
+    chmod +x /go/bin/minio-${TARGETARCH}.${RELEASE} && chmod +x /go/bin/mc && \
+    sha256sum -c minio.sha256sum && sha256sum -c mc.sha256sum && \
+    mv minio-${TARGETARCH}.${RELEASE} minio
+
+# optionally include download-static-curl script if present and make static curl
+# this is optional - if it fails, we already have curl from apk
+COPY dockerscripts/download-static-curl.sh /build/download-static-curl
+RUN chmod +x /build/download-static-curl && /build/download-static-curl || echo "Static curl download failed or not available for this architecture, using system curl"
+
+FROM registry.access.redhat.com/ubi9/ubi-micro:latest
+
+ENV MINIO_ACCESS_KEY_FILE=access_key \
+    MINIO_SECRET_KEY_FILE=secret_key \
+    MINIO_ROOT_USER_FILE=access_key \
+    MINIO_ROOT_PASSWORD_FILE=secret_key \
+    MINIO_KMS_SECRET_KEY_FILE=kms_master_key \
+    MINIO_CONFIG_ENV_FILE=config.env \
+    MC_CONFIG_DIR=/tmp/.mc
+
+RUN chmod -R 777 /usr/bin || true
+
+COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+
+# copy minio and mc from build stage
+COPY --from=build /go/bin/minio* /usr/bin/
+COPY --from=build /go/bin/mc* /usr/bin/
+
+COPY --from=build /go/bin/curl* /usr/bin/
+
+COPY CREDITS /licenses/CREDITS
+COPY LICENSE /licenses/LICENSE
+COPY dockerscripts/docker-entrypoint.sh /usr/bin/docker-entrypoint.sh
+
+EXPOSE 9000
+VOLUME ["/data"]
+
+ENTRYPOINT ["/usr/bin/docker-entrypoint.sh"]
+CMD ["minio"]
