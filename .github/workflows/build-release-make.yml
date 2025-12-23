@@ -46,6 +46,10 @@ jobs:
 
       - name: Apply custom patches
         run: |
+          ls -la ./minio-patches/minio-patches/${{ inputs.minio-tag }}/
+          ls -la
+          ls -la ./minio-patches/
+          ls -la ./minio-patches/minio-patches/
           cd ${GITHUB_WORKSPACE}
           for p in ./minio-patches/minio-patches/${{ inputs.minio-tag }}/*.patch; do
             echo "Applying $p…"
@@ -53,34 +57,34 @@ jobs:
           done
           rm -rf ./minio-patches
 
-      - name: Build binaries for multiple architectures
-        working-directory: minio-src
-        run: |
-          set -euo pipefail
-          export MINIO_RELEASE=RELEASE
-          export CGO_ENABLED=0
+      # - name: Build binaries for multiple architectures
+      #   working-directory: minio-src
+      #   run: |
+      #     set -euo pipefail
+      #     export MINIO_RELEASE=RELEASE
+      #     export CGO_ENABLED=0
 
-          # Build for each architecture
-          for arch in amd64 arm64; do
-            echo "Building for linux/${arch}..."
-            GOOS=linux GOARCH=${arch} make build
+      #     # Build for each architecture
+      #     for arch in amd64 arm64; do
+      #       echo "Building for linux/${arch}..."
+      #       GOOS=linux GOARCH=${arch} make build
 
-            # Get version from amd64 binary (first iteration)
-            if [ "${arch}" = "amd64" ]; then
-              RELEASE_TAG=$(./minio --version | head -n1 | awk '{print $3}')
-              echo "RELEASE_TAG=${RELEASE_TAG}" >> $GITHUB_ENV
-              echo "Release: ${RELEASE_TAG}"
-            fi
+      #       # Get version from amd64 binary (first iteration)
+      #       if [ "${arch}" = "amd64" ]; then
+      #         RELEASE_TAG=$(./minio --version | head -n1 | awk '{print $3}')
+      #         echo "RELEASE_TAG=${RELEASE_TAG}" >> $GITHUB_ENV
+      #         echo "Release: ${RELEASE_TAG}"
+      #       fi
 
-            # Prepare artifacts for each arch
-            cp -f ./minio "minio-${arch}.${RELEASE_TAG:-$(./minio --version | head -n1 | awk '{print $3}')}"
-            sha256sum "minio-${arch}.${RELEASE_TAG:-$(./minio --version | head -n1 | awk '{print $3}')}" > "minio-${arch}.${RELEASE_TAG:-$(./minio --version | head -n1 | awk '{print $3}')}.sha256sum"
-          done
+      #       # Prepare artifacts for each arch
+      #       cp -f ./minio "minio-${arch}.${RELEASE_TAG:-$(./minio --version | head -n1 | awk '{print $3}')}"
+      #       sha256sum "minio-${arch}.${RELEASE_TAG:-$(./minio --version | head -n1 | awk '{print $3}')}" > "minio-${arch}.${RELEASE_TAG:-$(./minio --version | head -n1 | awk '{print $3}')}.sha256sum"
+      #     done
 
-          # Download mc client for amd64 (used in tests)
-          curl -fsSL "https://dl.min.io/client/mc/release/linux-amd64/mc" -o "mc"
-          chmod +x "mc"
-          sha256sum "mc" | awk '{print $1"  mc"}' > "mc.sha256sum"
+      #     # Download mc client for amd64 (used in tests)
+      #     curl -fsSL "https://dl.min.io/client/mc/release/linux-amd64/mc" -o "mc"
+      #     chmod +x "mc"
+      #     sha256sum "mc" | awk '{print $1"  mc"}' > "mc.sha256sum"
 
       # - name: Run integration tests
       #   working-directory: minio-src
@@ -118,140 +122,140 @@ jobs:
       #     set -euo pipefail
       #     bash buildscripts/test-timeout.sh
 
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+      # - name: Log in to GitHub Container Registry
+      #   uses: docker/login-action@v3
+      #   with:
+      #     registry: ghcr.io
+      #     username: ${{ github.actor }}
+      #     password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push multi-arch Docker image
-        uses: docker/build-push-action@v6.18.0
-        with:
-          context: ./minio-src
-          file: ./Dockerfile.release.local
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: |
-            ghcr.io/${{ github.repository_owner }}/qubersip-minio:${{ env.RELEASE_TAG }}
-            ghcr.io/${{ github.repository_owner }}/qubersip-minio:latest
-          build-args: |
-            RELEASE=${{ env.RELEASE_TAG }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+      # - name: Build and push multi-arch Docker image
+      #   uses: docker/build-push-action@v6.18.0
+      #   with:
+      #     context: ./minio-src
+      #     file: ./Dockerfile.release.local
+      #     platforms: linux/amd64,linux/arm64
+      #     push: true
+      #     tags: |
+      #       ghcr.io/${{ github.repository_owner }}/qubersip-minio:${{ env.RELEASE_TAG }}
+      #       ghcr.io/${{ github.repository_owner }}/qubersip-minio:latest
+      #     build-args: |
+      #       RELEASE=${{ env.RELEASE_TAG }}
+      #     cache-from: type=gha
+      #     cache-to: type=gha,mode=max
 
-      - name: Pull multi-arch image for testing
-        run: |
-          docker pull ghcr.io/${{ github.repository_owner }}/qubersip-minio:${{ env.RELEASE_TAG }}
-          docker tag ghcr.io/${{ github.repository_owner }}/qubersip-minio:${{ env.RELEASE_TAG }} qubersip-minio:${{ env.RELEASE_TAG }}
-          docker tag ghcr.io/${{ github.repository_owner }}/qubersip-minio:${{ env.RELEASE_TAG }} qubersip-minio:latest
+      # - name: Pull multi-arch image for testing
+      #   run: |
+      #     docker pull ghcr.io/${{ github.repository_owner }}/qubersip-minio:${{ env.RELEASE_TAG }}
+      #     docker tag ghcr.io/${{ github.repository_owner }}/qubersip-minio:${{ env.RELEASE_TAG }} qubersip-minio:${{ env.RELEASE_TAG }}
+      #     docker tag ghcr.io/${{ github.repository_owner }}/qubersip-minio:${{ env.RELEASE_TAG }} qubersip-minio:latest
 
-      - name: Test Docker image - smoke test
-        run: |
-          set -euo pipefail
-          cid=$(docker run -d --rm \
-            -p 9000:9000 -p 9001:9001 \
-            -e MINIO_ROOT_USER=minioadmin \
-            -e MINIO_ROOT_PASSWORD=minioadmin \
-            "qubersip-minio:${RELEASE_TAG}" server /data --console-address ":9001")
+      # - name: Test Docker image - smoke test
+      #   run: |
+      #     set -euo pipefail
+      #     cid=$(docker run -d --rm \
+      #       -p 9000:9000 -p 9001:9001 \
+      #       -e MINIO_ROOT_USER=minioadmin \
+      #       -e MINIO_ROOT_PASSWORD=minioadmin \
+      #       "qubersip-minio:${RELEASE_TAG}" server /data --console-address ":9001")
 
-          for i in $(seq 1 60); do
-            code=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:9000/minio/health/ready || true)
-            [ "$code" = "200" ] && break
-            [ "$i" = "60" ] && { docker logs "$cid"; exit 1; }
-            sleep 1
-          done
+      #     for i in $(seq 1 60); do
+      #       code=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:9000/minio/health/ready || true)
+      #       [ "$code" = "200" ] && break
+      #       [ "$i" = "60" ] && { docker logs "$cid"; exit 1; }
+      #       sleep 1
+      #     done
 
-          curl -fsSL "https://dl.min.io/client/mc/release/linux-amd64/mc" -o /tmp/mc
-          chmod +x /tmp/mc
-          /tmp/mc alias set local http://127.0.0.1:9000 minioadmin minioadmin
-          /tmp/mc mb local/testbucket
-          echo "test" | /tmp/mc pipe local/testbucket/test.txt
-          /tmp/mc cat local/testbucket/test.txt | grep -q test
+      #     curl -fsSL "https://dl.min.io/client/mc/release/linux-amd64/mc" -o /tmp/mc
+      #     chmod +x /tmp/mc
+      #     /tmp/mc alias set local http://127.0.0.1:9000 minioadmin minioadmin
+      #     /tmp/mc mb local/testbucket
+      #     echo "test" | /tmp/mc pipe local/testbucket/test.txt
+      #     /tmp/mc cat local/testbucket/test.txt | grep -q test
 
-          docker stop "$cid" >/dev/null
-          echo "✓ Smoke tests passed"
+      #     docker stop "$cid" >/dev/null
+      #     echo "✓ Smoke tests passed"
 
-      - name: Test Docker image - erasure mode (Docker Compose)
-        run: |
-          set -euo pipefail
-          cat > /tmp/docker-compose.yml << 'EOF'
-          version: '3.7'
-          services:
-            minio1:
-              image: "qubersip-minio:REPLACE_TAG"
-              ports:
-                - "9000:9000"
-              environment:
-                MINIO_ROOT_USER: minioadmin
-                MINIO_ROOT_PASSWORD: minioadmin
-              command: server http://minio{1...4}/data --address ":9000"
-              volumes:
-                - /tmp/minio1:/data
-              networks:
-                - minio-net
-            minio2:
-              image: "qubersip-minio:REPLACE_TAG"
-              ports:
-                - "9001:9000"
-              environment:
-                MINIO_ROOT_USER: minioadmin
-                MINIO_ROOT_PASSWORD: minioadmin
-              command: server http://minio{1...4}/data --address ":9000"
-              volumes:
-                - /tmp/minio2:/data
-              networks:
-                - minio-net
-            minio3:
-              image: "qubersip-minio:REPLACE_TAG"
-              ports:
-                - "9002:9000"
-              environment:
-                MINIO_ROOT_USER: minioadmin
-                MINIO_ROOT_PASSWORD: minioadmin
-              command: server http://minio{1...4}/data --address ":9000"
-              volumes:
-                - /tmp/minio3:/data
-              networks:
-                - minio-net
-            minio4:
-              image: "qubersip-minio:REPLACE_TAG"
-              ports:
-                - "9003:9000"
-              environment:
-                MINIO_ROOT_USER: minioadmin
-                MINIO_ROOT_PASSWORD: minioadmin
-              command: server http://minio{1...4}/data --address ":9000"
-              volumes:
-                - /tmp/minio4:/data
-              networks:
-                - minio-net
-          networks:
-            minio-net:
-              driver: bridge
-          EOF
+      # - name: Test Docker image - erasure mode (Docker Compose)
+      #   run: |
+      #     set -euo pipefail
+      #     cat > /tmp/docker-compose.yml << 'EOF'
+      #     version: '3.7'
+      #     services:
+      #       minio1:
+      #         image: "qubersip-minio:REPLACE_TAG"
+      #         ports:
+      #           - "9000:9000"
+      #         environment:
+      #           MINIO_ROOT_USER: minioadmin
+      #           MINIO_ROOT_PASSWORD: minioadmin
+      #         command: server http://minio{1...4}/data --address ":9000"
+      #         volumes:
+      #           - /tmp/minio1:/data
+      #         networks:
+      #           - minio-net
+      #       minio2:
+      #         image: "qubersip-minio:REPLACE_TAG"
+      #         ports:
+      #           - "9001:9000"
+      #         environment:
+      #           MINIO_ROOT_USER: minioadmin
+      #           MINIO_ROOT_PASSWORD: minioadmin
+      #         command: server http://minio{1...4}/data --address ":9000"
+      #         volumes:
+      #           - /tmp/minio2:/data
+      #         networks:
+      #           - minio-net
+      #       minio3:
+      #         image: "qubersip-minio:REPLACE_TAG"
+      #         ports:
+      #           - "9002:9000"
+      #         environment:
+      #           MINIO_ROOT_USER: minioadmin
+      #           MINIO_ROOT_PASSWORD: minioadmin
+      #         command: server http://minio{1...4}/data --address ":9000"
+      #         volumes:
+      #           - /tmp/minio3:/data
+      #         networks:
+      #           - minio-net
+      #       minio4:
+      #         image: "qubersip-minio:REPLACE_TAG"
+      #         ports:
+      #           - "9003:9000"
+      #         environment:
+      #           MINIO_ROOT_USER: minioadmin
+      #           MINIO_ROOT_PASSWORD: minioadmin
+      #         command: server http://minio{1...4}/data --address ":9000"
+      #         volumes:
+      #           - /tmp/minio4:/data
+      #         networks:
+      #           - minio-net
+      #     networks:
+      #       minio-net:
+      #         driver: bridge
+      #     EOF
 
-          # Replace tag placeholder
-          sed -i "s/REPLACE_TAG/${RELEASE_TAG}/g" /tmp/docker-compose.yml
+      #     # Replace tag placeholder
+      #     sed -i "s/REPLACE_TAG/${RELEASE_TAG}/g" /tmp/docker-compose.yml
 
-          docker compose -f /tmp/docker-compose.yml up -d
-          sleep 10
+      #     docker compose -f /tmp/docker-compose.yml up -d
+      #     sleep 10
 
-          # Test erasure mode
-          for i in $(seq 1 30); do
-            code=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:9000/minio/health/ready || true)
-            [ "$code" = "200" ] && break
-            [ "$i" = "30" ] && { echo "Timeout waiting for MinIO"; exit 1; }
-            sleep 1
-          done
+      #     # Test erasure mode
+      #     for i in $(seq 1 30); do
+      #       code=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:9000/minio/health/ready || true)
+      #       [ "$code" = "200" ] && break
+      #       [ "$i" = "30" ] && { echo "Timeout waiting for MinIO"; exit 1; }
+      #       sleep 1
+      #     done
 
-          curl -fsSL "https://dl.min.io/client/mc/release/linux-amd64/mc" -o /tmp/mc
-          chmod +x /tmp/mc
-          /tmp/mc alias set erasure http://127.0.0.1:9000 minioadmin minioadmin
-          /tmp/mc mb erasure/testbucket
-          echo "erasure-test" | /tmp/mc pipe erasure/testbucket/test.txt
-          /tmp/mc cat erasure/testbucket/test.txt | grep -q erasure-test
+      #     curl -fsSL "https://dl.min.io/client/mc/release/linux-amd64/mc" -o /tmp/mc
+      #     chmod +x /tmp/mc
+      #     /tmp/mc alias set erasure http://127.0.0.1:9000 minioadmin minioadmin
+      #     /tmp/mc mb erasure/testbucket
+      #     echo "erasure-test" | /tmp/mc pipe erasure/testbucket/test.txt
+      #     /tmp/mc cat erasure/testbucket/test.txt | grep -q erasure-test
 
-          docker compose -f /tmp/docker-compose.yml down
-          echo "✓ Erasure mode tests passed"
+      #     docker compose -f /tmp/docker-compose.yml down
+      #     echo "✓ Erasure mode tests passed"
 
