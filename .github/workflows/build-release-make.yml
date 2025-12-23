@@ -3,7 +3,7 @@ name: Build MinIO Release (Makefile)
 on:
   workflow_dispatch:
     inputs:
-      upstream_ref:
+      minio-tag:
         description: "Upstream ref (tag/branch/commit) from minio/minio"
         required: true
         default: "master"
@@ -28,7 +28,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: ${{ env.MINIO_UPSTREAM_REPO }}
-          ref: ${{ inputs.upstream_ref }}
+          ref: ${{ inputs.minio-tag }}
           path: minio-src
           fetch-depth: 0
 
