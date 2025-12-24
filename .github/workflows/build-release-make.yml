@@ -180,7 +180,7 @@ jobs:
           context: .
           file: ./Dockerfile.release.local
           platforms: linux/amd64,linux/arm64
-          push: true
+          push: false
           tags: |
             ghcr.io/${{ env.OWNER }}/qubersip-minio:${{ env.RELEASE_TAG }}
             ghcr.io/${{ env.OWNER }}/qubersip-minio:latest
