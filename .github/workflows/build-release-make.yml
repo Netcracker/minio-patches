@@ -196,12 +196,14 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Pull multi-arch image for testing
+        if: ${{ inputs.push-docker-image }}
         run: |
           docker pull ghcr.io/${{ env.OWNER }}/qubersip-minio:${{ env.RELEASE_TAG }}
           docker tag ghcr.io/${{ env.OWNER }}/qubersip-minio:${{ env.RELEASE_TAG }} qubersip-minio:${{ env.RELEASE_TAG }}
           docker tag ghcr.io/${{ env.OWNER }}/qubersip-minio:${{ env.RELEASE_TAG }} qubersip-minio:latest
 
       - name: Test Docker image - smoke test
+        if: ${{ inputs.push-docker-image }}
         run: |
           set -euo pipefail
           cid=$(docker run -d --rm \
@@ -228,7 +230,7 @@ jobs:
           echo "✓ Smoke tests passed"
 
       - name: Test Docker image - erasure mode (Docker Compose)
-        if: ${{ inputs.run-erasure-mode-tests }}
+        if: ${{ inputs.run-erasure-mode-tests && inputs.push-docker-image }}
         run: |
           set -euo pipefail
           cat > /tmp/docker-compose.yml << 'EOF'
