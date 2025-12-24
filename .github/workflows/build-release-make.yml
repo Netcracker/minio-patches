@@ -74,7 +74,7 @@ jobs:
 
       - name: Move patch file to root
         run: |
-          mv  ./minio-patches/minio-patches/Dockerfile.release.local ./
+          mv  ./minio-patches/Dockerfile.release.local ./
 
       - name: Apply custom patches
         run: |
