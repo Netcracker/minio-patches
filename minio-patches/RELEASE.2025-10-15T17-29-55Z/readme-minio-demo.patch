@@ -1,6 +1,7 @@
+diff --git a/README.md b/README.md
 --- a/README.md
 +++ b/README.md
-@@ -1,3 +1,5 @@
+@@ -1,2 +1,4 @@
 +# Demo patch: This is a demo patch file for illustrative purposes.
 +
  MinIO Quickstart Guide
