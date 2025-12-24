@@ -8,6 +8,12 @@ on:
         required: true
         default: "master"
 
+      push-docker-image:
+        description: "Push Docker image to GHCR"
+        required: true
+        default: false
+        type: boolean
+
       run-integration-tests:
         description: "Run integration tests (verify-build.sh)"
         required: true
@@ -180,7 +186,7 @@ jobs:
           context: .
           file: ./Dockerfile.release.local
           platforms: linux/amd64,linux/arm64
-          push: false
+          push: ${{ inputs.push-docker-image }}
           tags: |
             ghcr.io/${{ env.OWNER }}/qubersip-minio:${{ env.RELEASE_TAG }}
             ghcr.io/${{ env.OWNER }}/qubersip-minio:latest
