@@ -85,6 +85,11 @@ jobs:
       - name: Apply custom patches
         run: |
           cd ${GITHUB_WORKSPACE}
+
+          # normalize patch files: remove CRLF and UTF-8 BOM
+          find ./minio-patches -name '*.patch' -print0 | xargs -0 -r sed -i 's/\r$//'
+          find ./minio-patches -name '*.patch' -print0 | xargs -0 -r perl -pi -e 's/^\xEF\xBB\xBF//'
+
           for p in ./minio-patches/minio-patches/${{ inputs.minio-tag }}/*.patch; do
             echo "Applying $p…"
             git apply -p1 --ignore-space-change --ignore-whitespace "$p"
