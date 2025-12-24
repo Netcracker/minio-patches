@@ -94,7 +94,7 @@ jobs:
             echo "Applying $p…"
             git apply -p1 --ignore-space-change --ignore-whitespace "$p"
           done
-          rm -rf ./minio-patches/minio-patches
+          rrm -rf ./minio-patches
 
       - name: Setup Go
         uses: actions/setup-go@v6
