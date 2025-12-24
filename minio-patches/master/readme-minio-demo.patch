@@ -1,12 +1,7 @@
+diff --git a/README.md b/README.md
 --- a/README.md
 +++ b/README.md
-@@ -1,6 +1,8 @@
+@@ -1 +1,3 @@
 +# Demo patch: This is a demo patch file for illustrative purposes.
 +
- # Maintenance Mode
-
--**This project is currently under maintenance and is not accepting new changes.**
-+**This project is currently under maintenance and is not accepting new changes.**
-
- - The codebase is in a maintenance-only state
- - No new features, enhancements, or pull requests will be accepted
+ # MinIO Quickstart Guide
