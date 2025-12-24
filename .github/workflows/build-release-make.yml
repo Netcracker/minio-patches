@@ -67,7 +67,7 @@ jobs:
           repository: ${{ env.MINIO_UPSTREAM_REPO }}
           ref: ${{ inputs.minio-tag }}
 
-      - name: Checkout this repo
+      - name: Checkout Repo Patches
         uses: actions/checkout@v6
         with:
           path: minio-patches
